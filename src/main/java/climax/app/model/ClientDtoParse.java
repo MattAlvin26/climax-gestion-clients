@@ -20,4 +20,5 @@ public class ClientDtoParse {
     private String profession;
     @Parsed(field="salaire")
     private Integer niveauRevenu;
+
 }

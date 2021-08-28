@@ -7,9 +7,14 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 @RestController
@@ -17,16 +22,17 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ClimaxController {
     private final IClimaxService climaxService;
+    public static String HOME=System.getProperty("user.home");
     public static String TYPECSV="text/csv";
-    public static String TYPEXML="text/xml";
-    public static String TYPEJSON="text/csv";
+    public static String TYPEXML="application/xml";
+    public static String TYPEJSON="application/json";
 
-    @GetMapping(ClimaxEndpoint.CLIMAX_HOME)
-    //@RequestMapping("/")
-    public String home(){
-        return "Hello World!";
-    }
 
+    /**
+     * Endppoint pour la liste des clients
+     *
+     * @return liste clientDto
+     */
     @GetMapping(ClimaxEndpoint.CLIMAX_LISTE_CLIENTS)
     public ResponseEntity<List<ClientDto>> getListClientsRequest()
     {
@@ -34,6 +40,11 @@ public class ClimaxController {
                 .body(this.climaxService.doGetListeClient());
     }
 
+    /**
+     * Endpoint pour retourner un client par son id
+     *
+     * @return clientDto
+     */
     @GetMapping(ClimaxEndpoint.CLIMAX_CLIENT)
     public ResponseEntity<ClientDto> getClientsRequest(
             @RequestParam("idClient") final Integer idClient)
@@ -41,14 +52,35 @@ public class ClimaxController {
         return ResponseEntity.status(HttpStatus.OK)
                 .body(this.climaxService.doGetClient(idClient));
     }
+
+    /**
+     * Endppoint pour enregistrer les données des differents fichier
+     * @param file
+     * @return liste clientDto
+     */
     @PostMapping(ClimaxEndpoint.CLIMAX_CLIENT)
-    public ResponseEntity<ClientDto> doPostClientsRequest(
-            @RequestParam("file") final MultipartFile file)
-    {
+    public ResponseEntity<List<ClientDto>> doPostClientsRequest(
+            @RequestParam("file") final MultipartFile file) throws IOException {
+        List<ClientDto> listeClient=new ArrayList<>();
         if(climaxService.getFileFormat(file).equals(TYPECSV)){
-            climaxService.doSaveToDatabase(file);
+            listeClient=climaxService.doSaveToDatabase(file);
+        }
+        if(climaxService.getFileFormat(file).equals(TYPEJSON)){
+            listeClient=climaxService.doSaveJsonToDatabase(file);
+        }
+        if(climaxService.getFileFormat(file).equals(TYPEXML)){
+            listeClient=climaxService.doSaveXmlToDatabase(file);
         }
 
-        return ResponseEntity.ok().build();
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(listeClient);
+    }
+
+    @GetMapping(ClimaxEndpoint.CLIMAX_MOYENNE_REVENU)
+    public ResponseEntity<Float> getClientsRequest(
+            @RequestParam("profession") final String profession)
+    {
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(this.climaxService.doGetMoyenneRevenu(profession));
     }
 }
