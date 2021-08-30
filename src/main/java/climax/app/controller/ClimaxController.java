@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -65,12 +66,16 @@ public class ClimaxController {
         if(climaxService.getFileFormat(file).equals(TYPECSV)){
             listeClient=climaxService.doSaveToDatabase(file);
         }
-        if(climaxService.getFileFormat(file).equals(TYPEJSON)){
+        else if(climaxService.getFileFormat(file).equals(TYPEJSON)){
             listeClient=climaxService.doSaveJsonToDatabase(file);
         }
-        if(climaxService.getFileFormat(file).equals(TYPEXML)){
+        else if(climaxService.getFileFormat(file).equals(TYPEXML)){
             listeClient=climaxService.doSaveXmlToDatabase(file);
+        }else {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"Ce type de fichier n'est pas pris en compte");
+
         }
+
 
         return ResponseEntity.status(HttpStatus.OK)
                 .body(listeClient);
